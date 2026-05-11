@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ConnectionTest from '../components/ConnectionTest';
 
 const features = [
   {
@@ -60,6 +61,8 @@ const Home = () => (
         </div>
       </aside>
     </section>
+
+    <ConnectionTest />
 
     <section className="section-card">
       <div className="section-heading">

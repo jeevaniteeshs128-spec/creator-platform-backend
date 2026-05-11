@@ -373,6 +373,35 @@ img {
   background: rgba(255, 255, 255, 0.58);
 }
 
+.connection-card {
+  display: grid;
+  gap: 18px;
+}
+
+.connection-status {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(124, 45, 18, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+}
+
+.connection-status-loading {
+  color: var(--brand-strong);
+}
+
+.connection-status-success {
+  border-color: rgba(34, 197, 94, 0.22);
+  background: rgba(34, 197, 94, 0.08);
+  color: #166534;
+}
+
+.connection-status-error {
+  border-color: rgba(239, 68, 68, 0.24);
+  background: rgba(239, 68, 68, 0.08);
+  color: #991b1b;
+}
+
 .helper-list {
   margin: 14px 0 0;
   padding-left: 18px;
