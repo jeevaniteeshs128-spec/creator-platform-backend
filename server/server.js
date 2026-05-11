@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { authenticateToken } = require('./middleware/auth');
 
 dotenv.config();
 
@@ -30,22 +31,6 @@ app.use(express.json());
 
 // In-memory user store (replace with database in production)
 let users = [];
-
-// Helper function to verify JWT
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'No token provided' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(401).json({ success: false, message: 'Invalid token' });
-  }
-};
 
 // Health endpoint
 app.get('/api/health', (req, res) => {
@@ -164,7 +149,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Get current user endpoint
-app.get('/api/auth/me', verifyToken, (req, res) => {
+app.get('/api/auth/me', authenticateToken, (req, res) => {
   try {
     const user = users.find((u) => u.id === req.userId);
 
@@ -193,10 +178,27 @@ app.get('/api/auth/me', verifyToken, (req, res) => {
 });
 
 // Logout endpoint (client-side token deletion)
-app.post('/api/auth/logout', verifyToken, (req, res) => {
+app.post('/api/auth/logout', authenticateToken, (req, res) => {
   res.json({
     success: true,
     message: 'Logout successful',
+  });
+});
+
+app.get('/api/dashboard/summary', authenticateToken, (req, res) => {
+  const user = users.find((entry) => entry.id === req.userId);
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  return res.json({
+    success: true,
+    message: `Secure summary loaded for ${user.name}.`,
+    user: {
+      id: user.id,
+      email: user.email,
+    },
   });
 });
 

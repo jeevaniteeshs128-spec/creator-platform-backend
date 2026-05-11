@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, useCallback } from 'react';
+import api from '../services/api';
 
 // Create context
 export const AuthContext = createContext();
@@ -10,9 +11,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // API base URL (will use proxy in dev)
-  const API_URL = '/api';
-
   // Restore authentication state from localStorage on mount
   useEffect(() => {
     const restoreAuth = async () => {
@@ -23,28 +21,12 @@ export const AuthProvider = ({ children }) => {
         if (storedToken) {
           setToken(storedToken);
 
-          // Verify token is still valid by calling /api/auth/me
-          const response = await fetch(`${API_URL}/auth/me`, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-              'Content-Type': 'application/json',
-            },
-          });
+          const { data } = await api.get('/auth/me');
 
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success) {
-              setUser(data.user);
-              setIsAuthenticated(true);
-            } else {
-              // Token is invalid, clear storage
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('authUser');
-              setIsAuthenticated(false);
-            }
+          if (data.success) {
+            setUser(data.user);
+            setIsAuthenticated(true);
           } else {
-            // Token is invalid
             localStorage.removeItem('authToken');
             localStorage.removeItem('authUser');
             setIsAuthenticated(false);
@@ -69,17 +51,9 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const { data } = await api.post('/auth/login', { email, password });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.message || 'Login failed');
       }
 
@@ -104,17 +78,9 @@ export const AuthProvider = ({ children }) => {
   const register = useCallback(async (name, email, password) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const { data } = await api.post('/auth/register', { name, email, password });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.message || 'Registration failed');
       }
 
@@ -140,13 +106,7 @@ export const AuthProvider = ({ children }) => {
     try {
       if (token) {
         // Notify backend of logout (optional)
-        await fetch(`${API_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }).catch(() => {
+        await api.post('/auth/logout').catch(() => {
           // Ignore errors during logout notification
         });
       }

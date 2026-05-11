@@ -1,4 +1,6 @@
 import { useAuth } from '../hooks/useAuth';
+import { useEffect, useState } from 'react';
+import api from '../services/api';
 
 const scheduleItems = [
   {
@@ -17,6 +19,30 @@ const scheduleItems = [
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [secureMessage, setSecureMessage] = useState('Loading protected data...');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProtectedData = async () => {
+      try {
+        const { data } = await api.get('/dashboard/summary');
+        if (isMounted) {
+          setSecureMessage(data.message || 'Protected data loaded.');
+        }
+      } catch (error) {
+        if (isMounted) {
+          setSecureMessage(error?.response?.data?.message || 'Unable to load protected data.');
+        }
+      }
+    };
+
+    loadProtectedData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <section className="dashboard-panel">
@@ -33,6 +59,10 @@ const Dashboard = () => {
         <article className="detail-card">
           <h3>Account Status</h3>
           <p>✓ You are logged in and authenticated to the platform.</p>
+        </article>
+        <article className="detail-card">
+          <h3>Protected API status</h3>
+          <p>{secureMessage}</p>
         </article>
         <article className="detail-card">
           <h3>Publishing status</h3>

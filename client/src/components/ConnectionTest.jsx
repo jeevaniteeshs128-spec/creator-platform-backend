@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import api from '../services/api';
 
 const ConnectionTest = () => {
   const [status, setStatus] = useState('idle');
@@ -9,12 +10,7 @@ const ConnectionTest = () => {
     setMessage('Checking connection through /api/health...');
 
     try {
-      const response = await fetch('/api/health');
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Request failed');
-      }
+      const { data } = await api.get('/health');
 
       setStatus('success');
       setMessage(data.message || 'Connection succeeded.');
