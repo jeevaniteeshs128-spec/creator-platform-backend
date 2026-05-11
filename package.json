@@ -1,0 +1,9 @@
+{
+  "$schema": ".vscode/package.schema.json",
+  "name": "creator-platform-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  }
+}
