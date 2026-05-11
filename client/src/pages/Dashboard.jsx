@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const scheduleItems = [
@@ -18,40 +16,16 @@ const scheduleItems = [
 ];
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const { user, isAuthenticated, loading } = useAuth();
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, loading, navigate]);
-
-  // Show loading state
-  if (loading) {
-    return (
-      <section className="dashboard-panel">
-        <div className="panel-heading">
-          <h1>Loading...</h1>
-        </div>
-      </section>
-    );
-  }
-
-  // Don't render dashboard if not authenticated
-  if (!isAuthenticated || !user) {
-    return null;
-  }
+  const { user } = useAuth();
 
   return (
     <section className="dashboard-panel">
       <div className="panel-heading">
         <span className="mini-note">Dashboard</span>
-        <h1>Welcome, {user.name}!</h1>
+        <h1>Welcome, {user?.name || 'Creator'}!</h1>
         <p className="panel-copy">
           You are authenticated. This dashboard shows your creator workspace overview.
-          Your email: <strong>{user.email}</strong>
+          Your email: <strong>{user?.email || 'Not available'}</strong>
         </p>
       </div>
 
