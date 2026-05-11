@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
@@ -18,7 +19,9 @@ const Login = () => {
     try {
       // Validate inputs
       if (!email || !password) {
-        setError('Please fill in all fields');
+        const message = 'Please fill in all fields';
+        setError(message);
+        toast.error(message);
         setIsSubmitting(false);
         return;
       }
@@ -30,10 +33,14 @@ const Login = () => {
         // Redirect to dashboard on successful login
         navigate('/dashboard');
       } else {
-        setError(result.error || 'Login failed');
+        const message = result.error || 'Login failed';
+        setError(message);
+        toast.error(message);
       }
     } catch (err) {
-      setError(err.message || 'An error occurred during login');
+      const message = err.message || 'An error occurred during login';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

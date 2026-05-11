@@ -1,7 +1,9 @@
 import { useAuth } from '../hooks/useAuth';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../services/api';
+import getErrorMessage from '../utils/errorMessage';
 
 const scheduleItems = [
   {
@@ -57,7 +59,9 @@ const Dashboard = () => {
         hasPreviousPage: false,
       });
     } catch (requestError) {
-      setError(requestError?.response?.data?.message || 'Unable to load your projects.');
+      const message = getErrorMessage(requestError, 'Unable to load your projects.');
+      setError(message);
+      toast.error(message);
       setProjects([]);
     } finally {
       setLoading(false);
@@ -104,6 +108,7 @@ const Dashboard = () => {
     try {
       await api.delete(`/projects/${project.id}`);
       setActionMessage('Project deleted successfully.');
+      toast.success('Project deleted successfully.');
 
       if (previousProjects.length === 1 && page > 1) {
         setPage((currentPage) => currentPage - 1);
@@ -113,7 +118,9 @@ const Dashboard = () => {
     } catch (requestError) {
       setProjects(previousProjects);
       setPagination(previousPagination);
-      setError(requestError?.response?.data?.message || 'Unable to delete project.');
+      const message = getErrorMessage(requestError, 'Unable to delete project.');
+      setError(message);
+      toast.error(message);
     } finally {
       setDeletingId('');
     }

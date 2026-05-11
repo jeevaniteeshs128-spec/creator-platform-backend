@@ -1,4 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/routes/ProtectedRoute';
@@ -61,6 +63,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} newestOnTop />
     </AuthProvider>
   </BrowserRouter>
 );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../hooks/useAuth';
 
 const Register = () => {
@@ -19,13 +20,17 @@ const Register = () => {
     try {
       // Validate inputs
       if (!name || !email || !password) {
-        setError('Please fill in all fields');
+        const message = 'Please fill in all fields';
+        setError(message);
+        toast.error(message);
         setIsSubmitting(false);
         return;
       }
 
       if (password.length < 6) {
-        setError('Password must be at least 6 characters');
+        const message = 'Password must be at least 6 characters';
+        setError(message);
+        toast.error(message);
         setIsSubmitting(false);
         return;
       }
@@ -37,10 +42,14 @@ const Register = () => {
         // Redirect to dashboard on successful registration
         navigate('/dashboard');
       } else {
-        setError(result.error || 'Registration failed');
+        const message = result.error || 'Registration failed';
+        setError(message);
+        toast.error(message);
       }
     } catch (err) {
-      setError(err.message || 'An error occurred during registration');
+      const message = err.message || 'An error occurred during registration';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../services/api';
+import getErrorMessage from '../utils/errorMessage';
 
 const EditProject = () => {
   const navigate = useNavigate();
@@ -28,7 +30,9 @@ const EditProject = () => {
         setStatus(project.status || 'draft');
         setProjectLoaded(true);
       } catch (requestError) {
-        setError(requestError?.response?.data?.message || 'Unable to load this project.');
+        const message = getErrorMessage(requestError, 'Unable to load this project.');
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -43,7 +47,9 @@ const EditProject = () => {
     setSuccess('');
 
     if (!title.trim() || !description.trim()) {
-      setError('Please provide a title and description.');
+      const message = 'Please provide a title and description.';
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -56,9 +62,12 @@ const EditProject = () => {
       });
 
       setSuccess('Project updated successfully.');
+      toast.success('Project updated successfully.');
       navigate('/dashboard');
     } catch (requestError) {
-      setError(requestError?.response?.data?.message || 'Unable to update project.');
+      const message = getErrorMessage(requestError, 'Unable to update project.');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

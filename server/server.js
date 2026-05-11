@@ -7,6 +7,7 @@ dotenv.config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { authenticateToken } = require('./middleware/auth');
+const errorHandler = require('./middleware/errorHandler');
 const {
   createProject,
   deleteProjectForUser,
@@ -14,6 +15,7 @@ const {
   getProjectById,
   updateProjectForUser,
 } = require('./models/Project');
+const AppError = require('./utils/AppError');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -62,24 +64,18 @@ app.get('/api/health', (req, res) => {
 });
 
 // Register endpoint
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide name, email, and password',
-      });
+      return next(new AppError('Please provide name, email, and password', 400));
     }
 
     // Check if user already exists
     const existingUser = users.find((u) => u.email === email);
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email',
-      });
+      return next(new AppError('User already exists with this email', 400));
     }
 
     // Hash password
@@ -109,42 +105,29 @@ app.post('/api/auth/register', async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error during registration',
-      error: error.message,
-    });
+    next(error);
   }
 });
 
 // Login endpoint
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide email and password',
-      });
+      return next(new AppError('Please provide email and password', 400));
     }
 
     // Find user
     const user = users.find((u) => u.email === email);
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password',
-      });
+      return next(new AppError('Invalid email or password', 401));
     }
 
     // Compare passwords
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password',
-      });
+      return next(new AppError('Invalid email or password', 401));
     }
 
     // Generate token
@@ -161,24 +144,17 @@ app.post('/api/auth/login', async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error during login',
-      error: error.message,
-    });
+    next(error);
   }
 });
 
 // Get current user endpoint
-app.get('/api/auth/me', authenticateToken, (req, res) => {
+app.get('/api/auth/me', authenticateToken, (req, res, next) => {
   try {
     const user = users.find((u) => u.id === req.userId);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
+      return next(new AppError('User not found', 404));
     }
 
     res.json({
@@ -190,11 +166,7 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
+    next(error);
   }
 });
 
@@ -206,11 +178,11 @@ app.post('/api/auth/logout', authenticateToken, (req, res) => {
   });
 });
 
-app.get('/api/dashboard/summary', authenticateToken, (req, res) => {
+app.get('/api/dashboard/summary', authenticateToken, (req, res, next) => {
   const user = users.find((entry) => entry.id === req.userId);
 
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' });
+    return next(new AppError('User not found', 404));
   }
 
   return res.json({
@@ -223,14 +195,11 @@ app.get('/api/dashboard/summary', authenticateToken, (req, res) => {
   });
 });
 
-app.post('/api/projects', authenticateToken, (req, res) => {
+app.post('/api/projects', authenticateToken, (req, res, next) => {
   const { title, description, status } = sanitizeProjectInput(req.body);
 
   if (!title || !description) {
-    return res.status(400).json({
-      success: false,
-      message: 'Please provide a title and description',
-    });
+    return next(new AppError('Please provide a title and description', 400));
   }
 
   const project = createProject({
@@ -260,21 +229,15 @@ app.get('/api/projects', authenticateToken, (req, res) => {
   });
 });
 
-app.get('/api/projects/:projectId', authenticateToken, (req, res) => {
+app.get('/api/projects/:projectId', authenticateToken, (req, res, next) => {
   const project = getProjectById(req.params.projectId);
 
   if (!project) {
-    return res.status(404).json({
-      success: false,
-      message: 'Project not found',
-    });
+    return next(new AppError('Project not found', 404));
   }
 
   if (project.userId !== req.userId) {
-    return res.status(403).json({
-      success: false,
-      message: 'You are not allowed to view this project',
-    });
+    return next(new AppError('You are not allowed to view this project', 403));
   }
 
   return res.json({
@@ -283,30 +246,21 @@ app.get('/api/projects/:projectId', authenticateToken, (req, res) => {
   });
 });
 
-app.put('/api/projects/:projectId', authenticateToken, (req, res) => {
+app.put('/api/projects/:projectId', authenticateToken, (req, res, next) => {
   const existingProject = getProjectById(req.params.projectId);
 
   if (!existingProject) {
-    return res.status(404).json({
-      success: false,
-      message: 'Project not found',
-    });
+    return next(new AppError('Project not found', 404));
   }
 
   if (existingProject.userId !== req.userId) {
-    return res.status(403).json({
-      success: false,
-      message: 'You are not allowed to update this project',
-    });
+    return next(new AppError('You are not allowed to update this project', 403));
   }
 
   const { title, description, status } = sanitizeProjectInput(req.body);
 
   if (!title || !description) {
-    return res.status(400).json({
-      success: false,
-      message: 'Please provide a title and description',
-    });
+    return next(new AppError('Please provide a title and description', 400));
   }
 
   const project = updateProjectForUser(req.params.projectId, req.userId, {
@@ -322,30 +276,21 @@ app.put('/api/projects/:projectId', authenticateToken, (req, res) => {
   });
 });
 
-app.delete('/api/projects/:projectId', authenticateToken, (req, res) => {
+app.delete('/api/projects/:projectId', authenticateToken, (req, res, next) => {
   const existingProject = getProjectById(req.params.projectId);
 
   if (!existingProject) {
-    return res.status(404).json({
-      success: false,
-      message: 'Project not found',
-    });
+    return next(new AppError('Project not found', 404));
   }
 
   if (existingProject.userId !== req.userId) {
-    return res.status(403).json({
-      success: false,
-      message: 'You are not allowed to delete this project',
-    });
+    return next(new AppError('You are not allowed to delete this project', 403));
   }
 
   const deletedProject = deleteProjectForUser(req.params.projectId, req.userId);
 
   if (!deletedProject) {
-    return res.status(404).json({
-      success: false,
-      message: 'Project not found or you do not have access',
-    });
+    return next(new AppError('Project not found or you do not have access', 404));
   }
 
   return res.json({
@@ -358,6 +303,12 @@ app.delete('/api/projects/:projectId', authenticateToken, (req, res) => {
 app.get('/', (req, res) => {
   res.json({ message: 'Creator Platform API is running' });
 });
+
+app.use((req, res, next) => {
+  next(new AppError('Route not found', 404));
+});
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

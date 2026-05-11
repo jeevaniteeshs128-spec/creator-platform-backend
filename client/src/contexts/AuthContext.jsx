@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import getErrorMessage from '../utils/errorMessage';
 
 // Create context
 export const AuthContext = createContext();
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: data.user };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: getErrorMessage(error, 'Login failed') };
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: data.user };
     } catch (error) {
       console.error('Register error:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: getErrorMessage(error, 'Registration failed') };
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: getErrorMessage(error, 'Logout failed') };
     }
   }, [token]);
 

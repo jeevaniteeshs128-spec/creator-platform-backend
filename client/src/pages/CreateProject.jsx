@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../services/api';
+import getErrorMessage from '../utils/errorMessage';
 
 const CreateProject = () => {
   const navigate = useNavigate();
@@ -15,7 +17,9 @@ const CreateProject = () => {
     setError('');
 
     if (!title.trim() || !description.trim()) {
-      setError('Please provide a title and description.');
+      const message = 'Please provide a title and description.';
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -29,7 +33,9 @@ const CreateProject = () => {
 
       navigate('/dashboard');
     } catch (requestError) {
-      setError(requestError?.response?.data?.message || 'Unable to create project.');
+      const message = getErrorMessage(requestError, 'Unable to create project.');
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
