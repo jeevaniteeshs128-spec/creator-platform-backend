@@ -247,6 +247,18 @@ img {
   color: var(--text);
 }
 
+.button-danger {
+  border-color: rgba(185, 28, 28, 0.2);
+  background: rgba(239, 68, 68, 0.1);
+  color: #991b1b;
+}
+
+.button-compact {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+}
+
 .hero-aside {
   display: flex;
   align-items: stretch;
@@ -393,6 +405,12 @@ img {
   color: #991b1b;
 }
 
+.status-banner-success {
+  border-color: rgba(34, 197, 94, 0.22);
+  background: rgba(34, 197, 94, 0.08);
+  color: #166534;
+}
+
 .empty-state {
   display: grid;
   gap: 12px;
@@ -411,6 +429,13 @@ img {
 .pagination-info {
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.project-actions,
+.form-actions-spaced {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .form-error {

@@ -5,6 +5,7 @@ import ProtectedRoute from './components/routes/ProtectedRoute';
 import PublicRoute from './components/routes/PublicRoute';
 import Dashboard from './pages/Dashboard';
 import CreateProject from './pages/CreateProject';
+import EditProject from './pages/EditProject';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
@@ -46,6 +47,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <CreateProject />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="projects/:projectId/edit"
+            element={
+              <ProtectedRoute>
+                <EditProject />
               </ProtectedRoute>
             }
           />

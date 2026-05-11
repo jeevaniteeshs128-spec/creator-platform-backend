@@ -38,7 +38,53 @@ const getPaginatedProjectsForUser = (userId, page = 1, limit = 5) => {
   };
 };
 
+const getProjectById = (projectId) => {
+  return projects.find((project) => project.id === projectId) || null;
+};
+
+const getProjectForUser = (projectId, userId) => {
+  const project = getProjectById(projectId);
+
+  if (!project || project.userId !== userId) {
+    return null;
+  }
+
+  return project;
+};
+
+const updateProjectForUser = (projectId, userId, updates) => {
+  const project = getProjectForUser(projectId, userId);
+
+  if (!project) {
+    return null;
+  }
+
+  project.title = updates.title;
+  project.description = updates.description;
+  project.status = updates.status;
+  project.updatedAt = new Date().toISOString();
+
+  return project;
+};
+
+const deleteProjectForUser = (projectId, userId) => {
+  const projectIndex = projects.findIndex(
+    (project) => project.id === projectId && project.userId === userId
+  );
+
+  if (projectIndex === -1) {
+    return null;
+  }
+
+  const [deletedProject] = projects.splice(projectIndex, 1);
+  return deletedProject;
+};
+
 module.exports = {
   createProject,
+  deleteProjectForUser,
+  getProjectById,
+  getProjectForUser,
   getPaginatedProjectsForUser,
+  updateProjectForUser,
 };

@@ -7,7 +7,13 @@ dotenv.config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { authenticateToken } = require('./middleware/auth');
-const { createProject, getPaginatedProjectsForUser } = require('./models/Project');
+const {
+  createProject,
+  deleteProjectForUser,
+  getPaginatedProjectsForUser,
+  getProjectById,
+  updateProjectForUser,
+} = require('./models/Project');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -15,6 +21,19 @@ const allowedOrigin = process.env.CLIENT_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
 const allowedOrigins = new Set([...defaultAllowedOrigins, allowedOrigin].filter(Boolean));
+const allowedProjectStatuses = ['draft', 'in progress', 'published'];
+
+const sanitizeProjectInput = ({ title, description, status }) => {
+  const safeTitle = typeof title === 'string' ? title.trim() : '';
+  const safeDescription = typeof description === 'string' ? description.trim() : '';
+  const safeStatus = allowedProjectStatuses.includes(status) ? status : 'draft';
+
+  return {
+    title: safeTitle,
+    description: safeDescription,
+    status: safeStatus,
+  };
+};
 
 // Middleware
 app.use(
@@ -205,13 +224,9 @@ app.get('/api/dashboard/summary', authenticateToken, (req, res) => {
 });
 
 app.post('/api/projects', authenticateToken, (req, res) => {
-  const { title, description, status } = req.body;
-  const safeTitle = typeof title === 'string' ? title.trim() : '';
-  const safeDescription = typeof description === 'string' ? description.trim() : '';
-  const allowedStatuses = ['draft', 'in progress', 'published'];
-  const safeStatus = allowedStatuses.includes(status) ? status : 'draft';
+  const { title, description, status } = sanitizeProjectInput(req.body);
 
-  if (!safeTitle || !safeDescription) {
+  if (!title || !description) {
     return res.status(400).json({
       success: false,
       message: 'Please provide a title and description',
@@ -220,9 +235,9 @@ app.post('/api/projects', authenticateToken, (req, res) => {
 
   const project = createProject({
     userId: req.userId,
-    title: safeTitle,
-    description: safeDescription,
-    status: safeStatus,
+    title,
+    description,
+    status,
   });
 
   return res.status(201).json({
@@ -242,6 +257,101 @@ app.get('/api/projects', authenticateToken, (req, res) => {
     success: true,
     items,
     pagination,
+  });
+});
+
+app.get('/api/projects/:projectId', authenticateToken, (req, res) => {
+  const project = getProjectById(req.params.projectId);
+
+  if (!project) {
+    return res.status(404).json({
+      success: false,
+      message: 'Project not found',
+    });
+  }
+
+  if (project.userId !== req.userId) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not allowed to view this project',
+    });
+  }
+
+  return res.json({
+    success: true,
+    project,
+  });
+});
+
+app.put('/api/projects/:projectId', authenticateToken, (req, res) => {
+  const existingProject = getProjectById(req.params.projectId);
+
+  if (!existingProject) {
+    return res.status(404).json({
+      success: false,
+      message: 'Project not found',
+    });
+  }
+
+  if (existingProject.userId !== req.userId) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not allowed to update this project',
+    });
+  }
+
+  const { title, description, status } = sanitizeProjectInput(req.body);
+
+  if (!title || !description) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a title and description',
+    });
+  }
+
+  const project = updateProjectForUser(req.params.projectId, req.userId, {
+    title,
+    description,
+    status,
+  });
+
+  return res.json({
+    success: true,
+    message: 'Project updated successfully',
+    project,
+  });
+});
+
+app.delete('/api/projects/:projectId', authenticateToken, (req, res) => {
+  const existingProject = getProjectById(req.params.projectId);
+
+  if (!existingProject) {
+    return res.status(404).json({
+      success: false,
+      message: 'Project not found',
+    });
+  }
+
+  if (existingProject.userId !== req.userId) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not allowed to delete this project',
+    });
+  }
+
+  const deletedProject = deleteProjectForUser(req.params.projectId, req.userId);
+
+  if (!deletedProject) {
+    return res.status(404).json({
+      success: false,
+      message: 'Project not found or you do not have access',
+    });
+  }
+
+  return res.json({
+    success: true,
+    message: 'Project deleted successfully',
+    project: deletedProject,
   });
 });
 

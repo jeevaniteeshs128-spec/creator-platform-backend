@@ -32,6 +32,8 @@ const Dashboard = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
+  const [deletingId, setDeletingId] = useState('');
 
   const loadProjects = useCallback(async (currentPage) => {
     try {
@@ -68,13 +70,52 @@ const Dashboard = () => {
 
   const handlePrevious = () => {
     if (pagination.hasPreviousPage && !loading) {
+      setActionMessage('');
       setPage((currentPage) => currentPage - 1);
     }
   };
 
   const handleNext = () => {
     if (pagination.hasNextPage && !loading) {
+      setActionMessage('');
       setPage((currentPage) => currentPage + 1);
+    }
+  };
+
+  const handleDelete = async (project) => {
+    const confirmed = window.confirm(`Delete "${project.title}"? This cannot be undone.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    const previousProjects = projects;
+    const previousPagination = pagination;
+
+    setDeletingId(project.id);
+    setError('');
+    setActionMessage('');
+    setProjects((currentProjects) => currentProjects.filter((item) => item.id !== project.id));
+    setPagination((currentPagination) => ({
+      ...currentPagination,
+      totalItems: Math.max(currentPagination.totalItems - 1, 0),
+    }));
+
+    try {
+      await api.delete(`/projects/${project.id}`);
+      setActionMessage('Project deleted successfully.');
+
+      if (previousProjects.length === 1 && page > 1) {
+        setPage((currentPage) => currentPage - 1);
+      } else {
+        await loadProjects(page);
+      }
+    } catch (requestError) {
+      setProjects(previousProjects);
+      setPagination(previousPagination);
+      setError(requestError?.response?.data?.message || 'Unable to delete project.');
+    } finally {
+      setDeletingId('');
     }
   };
 
@@ -95,6 +136,10 @@ const Dashboard = () => {
       </div>
 
       {loading && <div className="status-banner">Loading your projects...</div>}
+
+      {actionMessage && !loading && !error && (
+        <div className="status-banner status-banner-success">{actionMessage}</div>
+      )}
 
       {error && !loading && <div className="status-banner status-banner-error">{error}</div>}
 
@@ -123,6 +168,19 @@ const Dashboard = () => {
                 <small className="project-meta">
                   Created {new Date(project.createdAt).toLocaleString()}
                 </small>
+                <div className="project-actions">
+                  <Link className="button button-secondary button-compact" to={`/projects/${project.id}/edit`}>
+                    Edit
+                  </Link>
+                  <button
+                    className="button button-danger button-compact"
+                    type="button"
+                    onClick={() => handleDelete(project)}
+                    disabled={deletingId === project.id}
+                  >
+                    {deletingId === project.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
