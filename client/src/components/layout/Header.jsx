@@ -15,6 +15,7 @@ const Header = () => {
   const navItems = [
     { to: '/home', label: 'Home' },
     { to: '/dashboard', label: 'Dashboard' },
+    { to: '/create', label: 'Create Project' },
     { to: '/login', label: 'Login' },
     { to: '/register', label: 'Register' },
   ];
@@ -29,7 +30,10 @@ const Header = () => {
       <nav className="site-nav" aria-label="Primary navigation">
         {navItems.map((item) => {
           // Hide login/register if authenticated
-          if (isAuthenticated && (item.to === '/login' || item.to === '/register')) {
+          if (
+            isAuthenticated &&
+            (item.to === '/login' || item.to === '/register')
+          ) {
             return null;
           }
           return (

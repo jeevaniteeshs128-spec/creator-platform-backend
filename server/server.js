@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+
+dotenv.config();
+
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { authenticateToken } = require('./middleware/auth');
-
-dotenv.config();
+const { createProject, getPaginatedProjectsForUser } = require('./models/Project');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -199,6 +201,47 @@ app.get('/api/dashboard/summary', authenticateToken, (req, res) => {
       id: user.id,
       email: user.email,
     },
+  });
+});
+
+app.post('/api/projects', authenticateToken, (req, res) => {
+  const { title, description, status } = req.body;
+  const safeTitle = typeof title === 'string' ? title.trim() : '';
+  const safeDescription = typeof description === 'string' ? description.trim() : '';
+  const allowedStatuses = ['draft', 'in progress', 'published'];
+  const safeStatus = allowedStatuses.includes(status) ? status : 'draft';
+
+  if (!safeTitle || !safeDescription) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a title and description',
+    });
+  }
+
+  const project = createProject({
+    userId: req.userId,
+    title: safeTitle,
+    description: safeDescription,
+    status: safeStatus,
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: 'Project created successfully',
+    project,
+  });
+});
+
+app.get('/api/projects', authenticateToken, (req, res) => {
+  const page = Number.parseInt(req.query.page, 10) || 1;
+  const requestedLimit = Number.parseInt(req.query.limit, 10) || 5;
+  const limit = Math.min(Math.max(requestedLimit, 1), 20);
+  const { items, pagination } = getPaginatedProjectsForUser(req.userId, page, limit);
+
+  return res.json({
+    success: true,
+    items,
+    pagination,
   });
 });
 

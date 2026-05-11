@@ -321,6 +321,116 @@ img {
   background: rgba(255, 255, 255, 0.72);
 }
 
+.project-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.project-card {
+  display: grid;
+  gap: 12px;
+}
+
+.project-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.project-card p {
+  margin: 0;
+}
+
+.project-meta {
+  color: var(--muted);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-transform: capitalize;
+  background: rgba(124, 45, 18, 0.08);
+  color: var(--brand-strong);
+}
+
+.status-pill-draft {
+  background: rgba(180, 83, 9, 0.1);
+}
+
+.status-pill-in-progress {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.status-pill-published {
+  background: rgba(34, 197, 94, 0.12);
+  color: #166534;
+}
+
+.content-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.status-banner,
+.empty-state {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(124, 45, 18, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.status-banner-error {
+  border-color: rgba(239, 68, 68, 0.24);
+  background: rgba(239, 68, 68, 0.08);
+  color: #991b1b;
+}
+
+.empty-state {
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.form-error {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  background: rgba(239, 68, 68, 0.08);
+  color: #991b1b;
+}
+
+.field-group select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(124, 45, 18, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+}
+
 .feature-card h3,
 .detail-card h3,
 .schedule-card h3,
@@ -523,5 +633,11 @@ img {
 
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .project-card-header,
+  .pagination-controls {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

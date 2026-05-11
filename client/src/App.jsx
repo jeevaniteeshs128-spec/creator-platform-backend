@@ -4,6 +4,7 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/routes/ProtectedRoute';
 import PublicRoute from './components/routes/PublicRoute';
 import Dashboard from './pages/Dashboard';
+import CreateProject from './pages/CreateProject';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
@@ -37,6 +38,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="create"
+            element={
+              <ProtectedRoute>
+                <CreateProject />
               </ProtectedRoute>
             }
           />

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const getJwtSecret = () => process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization || '';
@@ -11,7 +11,7 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded;
     req.userId = decoded.userId;
     return next();

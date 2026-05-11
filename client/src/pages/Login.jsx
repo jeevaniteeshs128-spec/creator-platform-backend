@@ -76,7 +76,7 @@ const Login = () => {
               id="login-password"
               name="password"
               type="password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isSubmitting || loading}
