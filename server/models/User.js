@@ -1,27 +1,22 @@
 const mongoose = require('mongoose');
 
-const projectSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true,
-    },
-    title: {
+    name: {
       type: String,
       required: true,
       trim: true,
     },
-    description: {
+    email: {
       type: String,
       required: true,
+      unique: true,
+      lowercase: true,
       trim: true,
     },
-    status: {
+    password: {
       type: String,
-      enum: ['draft', 'in progress', 'published'],
-      default: 'draft',
+      required: true,
     },
   },
   {
@@ -29,6 +24,7 @@ const projectSchema = new mongoose.Schema(
     toJSON: {
       virtuals: true,
       transform(doc, ret) {
+        delete ret.password;
         delete ret.__v;
         return ret;
       },
@@ -36,4 +32,4 @@ const projectSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Project', projectSchema);
+module.exports = mongoose.model('User', userSchema);

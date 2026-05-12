@@ -1,7 +1,13 @@
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/AppError');
 
-const getJwtSecret = () => process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new AppError('Server authentication is not configured', 500);
+  }
+
+  return process.env.JWT_SECRET;
+};
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization || '';
@@ -14,9 +20,9 @@ const authenticateToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded;
-    req.userId = decoded.userId;
+    req.userId = decoded.id || decoded.userId;
     return next();
-  } catch (error) {
+  } catch {
     return next(new AppError('Invalid token', 401));
   }
 };
