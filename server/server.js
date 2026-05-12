@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const http = require('http');
 
 dotenv.config();
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const { authenticateToken } = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
@@ -40,6 +42,49 @@ const getJwtSecret = () => {
   return process.env.JWT_SECRET;
 };
 
+const createProjectHandler = (io) => async (req, res, next) => {
+  try {
+    const { title, description, status } = sanitizeProjectInput(req.body);
+
+    if (!title || !description) {
+      return next(new AppError('Please provide a title and description', 400));
+    }
+
+    const project = await Project.create({
+      userId: req.userId,
+      title,
+      description,
+      status,
+    });
+
+    const actor = await User.findById(req.userId).select('email name role');
+
+    io.emit('newPost', {
+      project: {
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        status: project.status,
+        createdAt: project.createdAt,
+      },
+      user: {
+        id: actor?.id || req.userId,
+        email: actor?.email || 'unknown',
+        username: actor?.name || req.user?.username || '',
+        role: actor?.role || req.user?.role || 'user',
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Project created successfully',
+      project,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -53,6 +98,52 @@ app.use(
 );
 
 app.use(express.json());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new AppError(`Not allowed by CORS for origin: ${origin}`, 403));
+    },
+  },
+});
+
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+
+    if (!token) {
+      return next(new Error('Authentication error'));
+    }
+
+    const decoded = jwt.verify(token, getJwtSecret());
+    const user = await User.findById(decoded.id).select('email name role');
+
+    if (!user) {
+      return next(new Error('Authentication error'));
+    }
+
+    socket.user = user;
+    socket.data.user = {
+      id: user.id,
+      email: user.email,
+      username: user.name || decoded.username || '',
+      role: user.role || decoded.role || 'user',
+    };
+
+    return next();
+  } catch (error) {
+    return next(new Error('Authentication error'));
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log(`Socket connected: ${socket.data.user.email}`);
+});
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -185,30 +276,7 @@ app.get('/api/dashboard/summary', authenticateToken, async (req, res, next) => {
   }
 });
 
-app.post('/api/projects', authenticateToken, async (req, res, next) => {
-  try {
-    const { title, description, status } = sanitizeProjectInput(req.body);
-
-    if (!title || !description) {
-      return next(new AppError('Please provide a title and description', 400));
-    }
-
-    const project = await Project.create({
-      userId: req.userId,
-      title,
-      description,
-      status,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'Project created successfully',
-      project,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+app.post('/api/projects', authenticateToken, createProjectHandler(io));
 
 app.get('/api/projects', authenticateToken, async (req, res, next) => {
   try {
@@ -333,7 +401,7 @@ app.use(errorHandler);
 
 connectDB()
   .then(() => {
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Server running on port ${port}`);
     });
   })
@@ -343,3 +411,5 @@ connectDB()
   });
 
 module.exports = app;
+module.exports.io = io;
+module.exports.server = server;

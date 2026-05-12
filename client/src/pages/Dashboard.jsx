@@ -1,8 +1,9 @@
 import { useAuth } from '../hooks/useAuth';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import api from '../services/api';
+import { createSocket } from '../services/socket';
 import getErrorMessage from '../utils/errorMessage';
 
 const scheduleItems = [
@@ -21,7 +22,7 @@ const scheduleItems = [
 ];
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [projects, setProjects] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -71,6 +72,28 @@ const Dashboard = () => {
   useEffect(() => {
     loadProjects(page);
   }, [loadProjects, page]);
+
+  useEffect(() => {
+    const socket = createSocket(token);
+
+    if (!socket) {
+      return undefined;
+    }
+
+    const handleNewPost = (payload) => {
+      const creatorName = payload?.user?.username || payload?.user?.email || 'Someone';
+      const projectTitle = payload?.project?.title || 'a new post';
+
+      toast.success(`${creatorName} created ${projectTitle}`);
+    };
+
+    socket.on('newPost', handleNewPost);
+
+    return () => {
+      socket.off('newPost', handleNewPost);
+      socket.disconnect();
+    };
+  }, [token]);
 
   const handlePrevious = () => {
     if (pagination.hasPreviousPage && !loading) {
