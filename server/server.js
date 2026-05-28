@@ -2,8 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const http = require('http');
+const path = require('path');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -11,6 +12,7 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const { authenticateToken } = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
+const uploadRoutes = require('./routes/upload');
 const Project = require('./models/Project');
 const User = require('./models/User');
 const AppError = require('./utils/AppError');
@@ -277,6 +279,7 @@ app.get('/api/dashboard/summary', authenticateToken, async (req, res, next) => {
 });
 
 app.post('/api/projects', authenticateToken, createProjectHandler(io));
+app.use('/api/upload', uploadRoutes);
 
 app.get('/api/projects', authenticateToken, async (req, res, next) => {
   try {
